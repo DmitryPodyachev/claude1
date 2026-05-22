@@ -67,14 +67,14 @@ jobs:
     - name: List DB
       if: ${{ inputs.list_db }}
       run: |
-        echo "Found database:" >> "$GITHUB_OUTPUT"
+        echo "Found database " >> "$GITHUB_OUTPUT"
         ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf" >> "$GITHUB_OUTPUT"
       timeout-minutes: 5
 
     - name: Service status
       if: ${{ inputs.odoo_status }}
       run: |
-        echo '<hr>Odoo status' >> "$GITHUB_OUTPUT"
+        echo '<hr>Odoo status ' >> "$GITHUB_OUTPUT"
         ssh -nT ${{ inputs.server }} "systemctl status odoo_main" > status_odoo.txt
         grep Active status_odoo.txt >> "$GITHUB_OUTPUT"
       timeout-minutes: 5
