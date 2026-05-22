@@ -72,7 +72,7 @@ jobs:
 
     - name: Service status
       if: ${{ inputs.odoo_status }}
-      run: ssh -nT ${{ inputs.server }} "systemctl status odoo_mainn"
+      run: ssh -nT ${{ inputs.server }} "systemctl status odoo_main"
       timeout-minutes: 5
 
     - name: Cleanup Workspace
