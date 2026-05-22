@@ -63,31 +63,33 @@ jobs:
       timeout-minutes: 10
       run: |
         ssh -nT ${{ inputs.server }} "hostname ; w ; df -h / ; top -b -n1"
-        echo "text<<EOF" >> $GITHUB_OUTPUT
-        echo "TEST" >> "$GITHUB_OUTPUT"
-        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Set the value in bash
+      id: step_one
+      run: |
+        {
+          echo 'JSON_RESPONSE<<EOF'
+          curl https://example.com
+          echo EOF
+        } >> "$GITHUB_ENV"
 
-    - name: test_input2
-      timeout-minutes: 10
-      run: echo "text<<EOF"$'\n'"$message"$'\n'EOF >> $GITHUB_OUTPUT
+    - name: Set the value in bash
+      run: echo "{name}={value}" >> "$GITHUB_OUTPUT"
 
     - name: List DB
       if: ${{ inputs.list_db }}
       run: |
-        echo "text<<XXEOF1" >> $GITHUB_OUTPUT
-        echo "Found database " >> "$GITHUB_OUTPUT"
-        ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf" >> "$GITHUB_OUTPUT"
-        echo "XXEOF1" >> $GITHUB_OUTPUT
+        echo "Found database " >> $GITHUB_STEP_SUMMARY
+        ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf" >> $GITHUB_STEP_SUMMARY
       timeout-minutes: 5
 
     - name: Service status
       if: ${{ inputs.odoo_status }}
       run: |
-        echo "text<<XXEOF2" >> $GITHUB_OUTPUT
-        echo '<hr>Odoo status ' >> "$GITHUB_OUTPUT"
+        echo '<hr>Odoo status ' >> $GITHUB_STEP_SUMMARY
         ssh -nT ${{ inputs.server }} "systemctl status odoo_main" > status_odoo.txt
-        grep Active status_odoo.txt >> "$GITHUB_OUTPUT"
-        echo "XXEOF2" >> $GITHUB_OUTPUT
+        cat status_odoo.txt
+        grep Active status_odoo.txt >> $GITHUB_STEP_SUMMARY
       timeout-minutes: 5
 
     - name: Cleanup Workspace
