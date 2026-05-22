@@ -23,7 +23,7 @@ on:
 jobs:
   job1:
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 30
 
     steps:
     - name: Setup SSH Config
@@ -62,17 +62,21 @@ jobs:
     - name: test_input
       timeout-minutes: 10
       run: |
-        base64 $HOME/.ssh/key.pem 
         ssh -nT ${{ inputs.server }} "hostname ; w ; df -h / ; top -b -n1"
 
     - name: List DB
       if: ${{ inputs.list_db }}
-      run: ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf"
+      run: |
+        echo "Found database:" >> "$GITHUB_OUTPUT"
+        ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf" >> "$GITHUB_OUTPUT"
       timeout-minutes: 5
 
     - name: Service status
       if: ${{ inputs.odoo_status }}
-      run: ssh -nT ${{ inputs.server }} "systemctl status odoo_main"
+      run: |
+        echo '<hr>Odoo status' >> "$GITHUB_OUTPUT"
+        ssh -nT ${{ inputs.server }} "systemctl status odoo_main" > status_odoo.txt
+        grep Active status_odoo.txt >> "$GITHUB_OUTPUT"
       timeout-minutes: 5
 
     - name: Cleanup Workspace
