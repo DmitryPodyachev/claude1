@@ -63,6 +63,13 @@ jobs:
       timeout-minutes: 10
       run: |
         ssh -nT ${{ inputs.server }} "hostname ; w ; df -h / ; top -b -n1"
+        echo "text<<EOF" >> $GITHUB_OUTPUT
+        echo "TEST" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: test_input2
+      timeout-minutes: 10
+      run: echo "text<<EOF"$'\n'"$message"$'\n'EOF >> $GITHUB_OUTPUT
 
     - name: List DB
       if: ${{ inputs.list_db }}
