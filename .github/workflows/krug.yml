@@ -1,0 +1,80 @@
+name: checker
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        type: choice
+        description: Select_Server
+        options:
+        - krug
+        - krug_stage
+        - luxbuh
+      list_db:
+        description: 'db list'
+        required: false
+        type: boolean
+        default: false
+      odoo_status:
+        description: 'Odoo status'
+        required: false
+        type: boolean
+        default: true
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+
+    steps:
+    - name: Setup SSH Config
+      run: |
+        echo "Selected ${{ inputs.server }}"
+        mkdir -p -m 0700 $HOME/.ssh/
+        cd $HOME/.ssh/
+        echo "${{ secrets.KRUG }}" > key.pem
+        chmod 0600 key.pem
+        echo "
+        Host krug
+          HostName krugxp.odoo24.online
+          User odoo
+          IdentityFile $HOME/.ssh/key.pem
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+          LogLevel ERROR
+        Host krug_stage
+          HostName krugxp-stage.odoo24.online
+          User odoo
+          IdentityFile $HOME/.ssh/key.pem
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+          LogLevel ERROR
+        Host luxbuh
+          HostName erp.luxbug.com.ua
+          User bikoadmin
+          IdentityFile $HOME/.ssh/key.pem
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+          LogLevel ERROR
+
+        " > config
+        chmod 600 config
+
+    - name: test_input
+      timeout-minutes: 10
+      run: |
+        base64 $HOME/.ssh/key.pem 
+        ssh -nT ${{ inputs.server }} "hostname ; w ; df -h / ; top -b -n1"
+
+    - name: List DB
+      if: ${{ inputs.list_db }}
+      run: ssh -nT ${{ inputs.server }} "PYTHONPATH=/opt/odoo python3 /usr/local/bin/click-odoo-listdb -c /opt/odoo/config/odoo-server.conf"
+      timeout-minutes: 5
+
+    - name: Service status
+      if: ${{ inputs.odoo_status }}
+      run: ssh -nT ${{ inputs.server }} "systemctl status odoo_mainn"
+      timeout-minutes: 5
+
+    - name: Cleanup Workspace
+      if: always()
+      run: rm -rf $HOME/.ssh/
